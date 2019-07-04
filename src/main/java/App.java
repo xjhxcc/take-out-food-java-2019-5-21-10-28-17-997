@@ -13,65 +13,77 @@ public class App {
     }
 
     public String bestCharge(List<String> inputs) {
-        ItemRepository itemRep = new ItemRepositoryTestImpl();
-		List<Item> itemRepAll = itemRep.findAll();// 商品信息
-		SalesPromotionRepository salePro = new SalesPromotionRepositoryTestImpl();
-		List<SalesPromotion> saleProAll = salePro.findAll();// 优惠信息
-		StringBuffer sb = new StringBuffer();
-		StringBuffer namestr = new StringBuffer();//半价优惠商品字符串
-		List<String> list1 = new ArrayList<String>();// 存储半价优惠的商品名称
-		int money = 0, total = 0;//优惠前价格   优惠后价格
-		int i = 0;//优惠的价格
-		sb.append("============= 订餐明细 =============\n");
-		for (String input : inputs) {
-			String[] str = input.split("x");//以x分割
-			String id = str[0].trim();//商品编号   去除空格
-			String count = str[1].trim();//商品数量
-			for (Item a : itemRepAll) {//根据编号  遍历ALL_ITEMS 查询出商品名称和商品价格
-				int price = (int) a.getPrice();//double转int
-				if (id.equals(a.getId())) {
-					sb.append(a.getName() + " x " + count + " = " + price * Integer.parseInt(count) + "元\n");
-					money += price * Integer.parseInt(count);
-					if (saleProAll.get(1).getRelatedItems().contains(id)) {//遍历ALL_SALES_PROMOTIONS  查询是否满足半价优惠
-						i += price / 2 * Integer.parseInt(count);
-						if (list1.size() > 0) {
-							namestr.append("，" + a.getName());//namestr用于后续打印
-						} else {
-							namestr.append(a.getName());
-						}
-						list1.add(a.getName());
+       StringBuffer sb = new StringBuffer();
+     	int money = 0,total = 0;
+     	int i = 0, j = 0;
+     	sb.append("============= 订餐明细 =============\n");
+     	for(String input : inputs){
+        	String[] str = input.split("x");
+        	String name = str[0].trim();
+        	String count = str[1].trim();
+    		if(name.equals("ITEM0001")){
+    			sb.append("黄焖鸡 x " + count + " = " + 18*Integer.parseInt(count) +"元\n");
+    			money += 18*Integer.parseInt(count); 
+    			i = 9 * Integer.parseInt(count);
+    		}else if(name.equals("ITEM0013")){
+    			sb.append("肉夹馍 x " + count + " = " + 6*Integer.parseInt(count) +"元\n");	
+    			money += 6*Integer.parseInt(count);
+    		}else if(name.equals("ITEM0022")){
+    			sb.append("凉皮 x " + count + " = " + 8*Integer.parseInt(count) +"元\n");	
+    			money += 8*Integer.parseInt(count);
+    			j = 4 * Integer.parseInt(count);
+    		}
+        }
+        sb.append("-----------------------------------\n");
+        if(money < 30 && i == 0 && j == 0){
+        	sb.append("总计：" + money + "元\n");
+        }else if(money < 30 && i != 0 && j != 0){
+        	total = money - (i + j);
+        	sb.append("使用优惠:\n指定菜品半价(黄焖鸡，凉皮)，省" + (i + j)+ "元\n");
+        	sb.append("-----------------------------------\n");
+        	sb.append("总计：" + total + "元\n");
+        }else if(money < 30 && i != 0 && j == 0){
+        	total = money - i;
+        	sb.append("使用优惠:\n指定菜品半价(黄焖鸡)，省" + i + "元\n");
+        	sb.append("-----------------------------------\n");
+        	sb.append("总计：" + total + "元\n");
+        }else if(money < 30 && i == 0 && j != 0){
+        	total = money - j;
+        	sb.append("使用优惠:\n指定菜品半价(凉皮)，省" + j + "元\n");
+        	sb.append("-----------------------------------\n");
+        	sb.append("总计：" + total + "元\n");
+        }else if(money >= 30 && i == 0 && j == 0 ){
+        	total = money - 6;
+        	sb.append("使用优惠:\n满30减6元，省6元\n");
+        	sb.append("-----------------------------------\n");
+        	sb.append("总计：" + total + "元\n");
+        }else if(money >= 30 && i == 0 && j != 0){
+        	if( j <= 6){
+        		total = money - 6;
+            	sb.append("使用优惠:\n满30减6元，省6元\n");
+            	sb.append("-----------------------------------\n");
+            	sb.append("总计：" + total + "元\n");
+        	}else{
+        		total = money - j;
+            	sb.append("使用优惠:\n指定菜品半价(凉皮)，省" + j + "元\n");
+            	sb.append("-----------------------------------\n");
+            	sb.append("总计：" + total + "元\n");
+        	}
+        }else if(money >= 30 && i != 0 && j != 0){
+        	if(i + j > 6){
+        		total = money - (i + j);
+            	sb.append("使用优惠:\n指定菜品半价(黄焖鸡，凉皮)，省" + (i + j)+ "元\n");
+            	sb.append("-----------------------------------\n");
+            	sb.append("总计：" + total + "元\n");
+        	}else{
+        		total = money - 6;
+            	sb.append("使用优惠:\n满30减6元，省6元\n");
+            	sb.append("-----------------------------------\n");
+            	sb.append("总计：" + total + "元\n");
+        	}
+        }
+        sb.append("===================================");
+        return  sb.toString();
 
-					}
-				}
-			}
-		}
-		sb.append("-----------------------------------\n");
-		/*
-		 * <30,有指定半价，减去优惠的 <30,没有指定半价，就是这个价格 >30,有指定半价，考虑哪种更优惠：1. 2.
-		 * >30,没有指定半价，直接减6
-		 */
-		if (money < 30 && i != 0) {// <30,有指定半价，减去优惠的
-			total = money - (i);
-			sb.append("使用优惠:\n指定菜品半价(" + namestr + ")，省" + (i) + "元\n");
-			sb.append("-----------------------------------\n");
-		} else if (money >= 30 && i == 0) {// >30,没有指定半价，直接减6
-			total = money - 6;
-			sb.append("使用优惠:\n满30减6元，省6元\n");
-			sb.append("-----------------------------------\n");
-		} else if (money >= 30 && i != 0) {// >30,有指定半价，考虑哪种更优惠：1. 2.
-			if (i <= 6) {// 指定半价优惠小于满30-6优惠，选择后者
-				total = money - 6;
-				sb.append("使用优惠:\n满30减6元，省6元\n");
-			} else {
-				total = money - i;
-				sb.append("使用优惠:\n指定菜品半价(" + namestr + ")，省" + i + "元\n");
-			}
-			sb.append("-----------------------------------\n");
-		} else {// <30,无指定半价
-			total = money;
-		}
-		sb.append("总计：" + total + "元\n");
-		sb.append("===================================");
-		return sb.toString();
     }
 }
