@@ -13,8 +13,65 @@ public class App {
     }
 
     public String bestCharge(List<String> inputs) {
-        //TODO: write code here
+        ItemRepository itemRep = new ItemRepositoryTestImpl();
+		List<Item> itemRepAll = itemRep.findAll();// 商品信息
+		SalesPromotionRepository salePro = new SalesPromotionRepositoryTestImpl();
+		List<SalesPromotion> saleProAll = salePro.findAll();// 优惠信息
+		StringBuffer sb = new StringBuffer();
+		StringBuffer namestr = new StringBuffer();//半价优惠商品字符串
+		List<String> list1 = new ArrayList<String>();// 存储半价优惠的商品名称
+		int money = 0, total = 0;//优惠前价格   优惠后价格
+		int i = 0;//优惠的价格
+		sb.append("============= 订餐明细 =============\n");
+		for (String input : inputs) {
+			String[] str = input.split("x");//以x分割
+			String id = str[0].trim();//商品编号   去除空格
+			String count = str[1].trim();//商品数量
+			for (Item a : itemRepAll) {//根据编号  遍历ALL_ITEMS 查询出商品名称和商品价格
+				int price = (int) a.getPrice();//double转int
+				if (id.equals(a.getId())) {
+					sb.append(a.getName() + " x " + count + " = " + price * Integer.parseInt(count) + "元\n");
+					money += price * Integer.parseInt(count);
+					if (saleProAll.get(1).getRelatedItems().contains(id)) {//遍历ALL_SALES_PROMOTIONS  查询是否满足半价优惠
+						i += price / 2 * Integer.parseInt(count);
+						if (list1.size() > 0) {
+							namestr.append("，" + a.getName());//namestr用于后续打印
+						} else {
+							namestr.append(a.getName());
+						}
+						list1.add(a.getName());
 
-        return null;
+					}
+				}
+			}
+		}
+		sb.append("-----------------------------------\n");
+		/*
+		 * <30,有指定半价，减去优惠的 <30,没有指定半价，就是这个价格 >30,有指定半价，考虑哪种更优惠：1. 2.
+		 * >30,没有指定半价，直接减6
+		 */
+		if (money < 30 && i != 0) {// <30,有指定半价，减去优惠的
+			total = money - (i);
+			sb.append("使用优惠:\n指定菜品半价(" + namestr + ")，省" + (i) + "元\n");
+			sb.append("-----------------------------------\n");
+		} else if (money >= 30 && i == 0) {// >30,没有指定半价，直接减6
+			total = money - 6;
+			sb.append("使用优惠:\n满30减6元，省6元\n");
+			sb.append("-----------------------------------\n");
+		} else if (money >= 30 && i != 0) {// >30,有指定半价，考虑哪种更优惠：1. 2.
+			if (i <= 6) {// 指定半价优惠小于满30-6优惠，选择后者
+				total = money - 6;
+				sb.append("使用优惠:\n满30减6元，省6元\n");
+			} else {
+				total = money - i;
+				sb.append("使用优惠:\n指定菜品半价(" + namestr + ")，省" + i + "元\n");
+			}
+			sb.append("-----------------------------------\n");
+		} else {// <30,无指定半价
+			total = money;
+		}
+		sb.append("总计：" + total + "元\n");
+		sb.append("===================================");
+		return sb.toString();
     }
 }
